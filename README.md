@@ -4,6 +4,32 @@ Modern, containerized status page for displaying real-time service health. Deplo
 
 **Suchaka** is a free, open-source alternative to StatusPage.io. Perfect for startups, DevOps teams, and companies that need data sovereignty.
 
+## Architecture
+
+### Agent (Go) - Monitoring & Resilience
+- **HTTP Monitoring**: Tracks DNS, TCP, TLS, TTFB metrics
+- **High Availability**: Leader election via PostgreSQL advisory locks
+- **Multi-replica Support**: Run multiple agents with same ID for automatic failover (~30s recovery)
+- **Config Reload**: Detects monitor changes every 1 minute (configurable)
+- **Persistent Queue**: Survives restarts with local disk queue
+- **Graceful Shutdown**: Flushes pending heartbeats on exit
+- **Health Endpoints**: `/healthz` and `/readyz` for orchestration
+
+### Status Page (React + Node.js) - Real-time Dashboard
+- **Live Updates**: Auto-refresh every 30 seconds
+- **Multi-region View**: See service status across regions
+- **Historical Data**: 5m, 15m, 30m, 1h, 4h, 24h, 1w, 2w windows
+- **Customizable Branding**: Logo, colors, company info
+- **Response Charts**: Visualize performance trends
+- **Uptime Percentage**: Track SLA compliance
+
+### PostgreSQL - Scalable Data Storage
+- **Time-series Optimized**: Partitioned by date for performance
+- **Auto-partitioning**: Agent creates daily partitions automatically
+- **30-day Retention**: Configurable data cleanup
+- **Advisory Locks**: Leader election for HA agents
+- **Indexes**: Optimized for heartbeat queries
+
 ## Why Suchaka?
 
 | Feature | Suchaka | StatusPage.io | Cachet |
@@ -67,35 +93,56 @@ npm run dev
 open http://localhost:5173
 ```
 
-## What Gets Monitored
+## Sample Data vs Custom Monitoring
 
-Out of the box, Suchaka monitors 8 public APIs:
-1. ISRO Spacecrafts
-2. ISRO Launchers
-3. ISRO Customer Satellites
-4. Aviation Weather METAR
-5. NHTSA Vehicle API
-6. Squiggle AFL Teams
-7. NVD Schema
-8. JSONPlaceholder Posts
+### Sample Data (Testing)
+By default, Suchaka loads 8 public APIs for testing:
+- ISRO Spacecrafts, Launchers, Customer Satellites
+- Aviation Weather METAR
+- NHTSA Vehicle API
+- Squiggle AFL Teams
+- NVD Schema
+- JSONPlaceholder Posts
 
-**Add your own:** Edit database to add custom endpoints
+Use this to test the system without setting up your own monitors.
 
-## Architecture
+### Custom Monitoring (Production)
+Replace sample data with your own services using SQL commands:
 
-```
-Agent (Go)              Status Page (React)         PostgreSQL
-├─ Monitors APIs        ├─ Frontend UI              ├─ Monitors
-├─ Collects metrics     ├─ Backend API (Node.js)    ├─ Heartbeats
-├─ Stores heartbeats    └─ Branding config          ├─ Regions
-└─ HA with failover                                 └─ Agents
+**1. Create Region**
+```sql
+INSERT INTO regions (name, region_code, group_name) 
+VALUES ('US East', 'us-east-1', 'US');
 ```
 
-**Components:**
-- **Agent** (Go) - HTTP monitoring with HA support
-- **Status Page** (React + Node.js) - Public dashboard
-- **PostgreSQL** - Time-series data storage
-- **Docker** - Containerized deployment
+**2. Create Datacenter**
+```sql
+INSERT INTO datacenters (code, name, region_id) 
+VALUES ('us-east-1a', 'US East 1A', 1);
+```
+
+**3. Create Agent**
+```sql
+INSERT INTO agents (name, datacenter_id) 
+VALUES ('Agent 1', 1);
+```
+
+**4. Create Monitor**
+```sql
+INSERT INTO api_monitors (name, method, type, url, schedule_id) 
+VALUES ('My API', 'GET', 'HTTPS', 'https://api.example.com/health', 1);
+```
+
+**5. Assign Monitor to Agent**
+```sql
+INSERT INTO agent_monitors (agent_id, monitor_id, active, created_by) 
+VALUES (1, 1, TRUE, 'admin');
+```
+
+**6. Agent Picks Up Changes**
+- Agent reloads config every 1 minute (configurable)
+- Starts monitoring assigned endpoints
+- Sends heartbeats to database
 
 ## Configuration
 

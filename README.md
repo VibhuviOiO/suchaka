@@ -149,17 +149,12 @@ Partitions are managed by agent-side creation logic.
 - Create and manage incidents
 - Track incident timeline and updates
 - Incident history and analytics
-- Customer notifications
+- Customer RSS Feed
 - Incident severity levels
 - Automatic incident creation on service degradation
 
 ### Future Features
-- Email/SMS notifications
 - Webhook integrations
-- Custom metrics
-- Advanced analytics
-- Team management
-- API authentication
 
 ## Documentation
 

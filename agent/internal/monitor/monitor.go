@@ -1,7 +1,6 @@
 package monitor
 
 import (
-	"UptimeOAgent/internal/db"
 	"UptimeOAgent/internal/models"
 	"context"
 	"crypto/tls"
@@ -10,44 +9,7 @@ import (
 	"net/http/httptrace"
 	"strings"
 	"time"
-
-	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/sirupsen/logrus"
 )
-
-func StartAgent(ctx context.Context, agent models.Agent, cfg *models.Config, pool *pgxpool.Pool) {
-	for _, mon := range agent.Monitors {
-		schedule := findSchedule(agent.GlobalSchedules, mon.ScheduleID)
-		if schedule == nil {
-			logrus.Warnf("Schedule not found for monitor %d", mon.ID)
-			continue
-		}
-		go func(mon models.Monitor, schedule models.Schedule) {
-			ticker := time.NewTicker(time.Duration(schedule.Interval) * time.Second)
-			defer ticker.Stop()
-			for {
-				select {
-				case <-ticker.C:
-					logrus.Infof("Ticker fired for monitor %d (%s)", mon.ID, mon.Name)
-					hb, err := ExecuteHttpMonitor(agent, mon, schedule)
-					if err != nil {
-						logrus.Error("Monitor execution failed:", err)
-						continue
-					}
-					logrus.Infof("Executing monitor %d (%s)", mon.ID, mon.Name)
-					if err := db.InsertHeartbeat(ctx, pool, hb); err != nil {
-						logrus.Error("Failed to save heartbeat:", err)
-					} else {
-						logrus.Infof("Heartbeat inserted for monitor %d (%s)", mon.ID, mon.Name)
-					}
-				case <-ctx.Done():
-					return
-				}
-			}
-		}(mon, *schedule)
-	}
-	<-ctx.Done()
-}
 
 func findSchedule(schedules []models.Schedule, id int) *models.Schedule {
 	for _, s := range schedules {

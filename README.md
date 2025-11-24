@@ -53,13 +53,18 @@ cd ../agent
 go mod tidy
 go run cmd/agent/main.go
 
-# 4. Start status page (in another terminal)
-cd ../statuspage
+# 4. Start backend (in another terminal)
+cd ../statuspage/backend
 npm install
 npm run dev
 
-# 5. Access status page
-open http://localhost:8077
+# 5. Start frontend (in another terminal)
+cd ../statuspage/frontend
+npm install
+npm run dev
+
+# 6. Access status page
+open http://localhost:5173
 ```
 
 ## What Gets Monitored
@@ -133,9 +138,28 @@ Partitions are managed by agent-side creation logic.
 
 ## Access Points
 
-- **Status Page**: http://localhost:8077
+- **Status Page**: http://localhost:5173 (dev) / http://localhost:8077 (prod)
+- **Backend API**: http://localhost:8077/api
 - **PostgreSQL**: localhost:5432 (uptimeo/uptimeo)
 - **Agent Health**: http://localhost:8081/healthz
+
+## Roadmap
+
+### Incident Management (Planned)
+- Create and manage incidents
+- Track incident timeline and updates
+- Incident history and analytics
+- Customer notifications
+- Incident severity levels
+- Automatic incident creation on service degradation
+
+### Future Features
+- Email/SMS notifications
+- Webhook integrations
+- Custom metrics
+- Advanced analytics
+- Team management
+- API authentication
 
 ## Documentation
 

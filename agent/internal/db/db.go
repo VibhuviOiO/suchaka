@@ -14,6 +14,10 @@ func Connect(connString string) (*pgxpool.Pool, error) {
 }
 
 func InsertHeartbeat(ctx context.Context, pool *pgxpool.Pool, hb *models.Heartbeat) error {
+	if err := EnsurePartitionExists(ctx, pool, hb.ExecutedAt); err != nil {
+		logrus.Warnf("Partition creation failed, attempting insert anyway: %v", err)
+	}
+
 	var reqHeaders, respHeaders []byte
 	var err error
 	

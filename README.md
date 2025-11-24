@@ -45,11 +45,20 @@ Modern, containerized status page for displaying real-time service health. Deplo
 git clone git@github.com:VibhuviOiO/suchaka.git
 cd suchaka/docker
 
-# 2. Start with minimal setup (2 agents, 2 regions)
-rm -rf tmp/pgdata tmp/data
-docker compose up -d
+# 2. Start PostgreSQL
+docker compose up -d postgres
 
-# 3. Access status page
+# 3. Start agents (in separate terminal)
+cd ../agent
+go mod tidy
+go run cmd/agent/main.go
+
+# 4. Start status page (in another terminal)
+cd ../statuspage
+npm install
+npm run dev
+
+# 5. Access status page
 open http://localhost:8077
 ```
 
@@ -113,12 +122,20 @@ docker compose up -d
 docker compose -f docker-compose.extended.yml up -d
 ```
 
+## Database Partitioning
+
+Heartbeat data is automatically partitioned by date for optimal performance:
+- **On startup**: Agent creates partition for today
+- **On each heartbeat**: Agent checks and creates partition if needed for that date
+- **Zero maintenance**: No manual intervention needed, ever
+
+Partitions are managed by agent-side creation logic.
+
 ## Access Points
 
 - **Status Page**: http://localhost:8077
 - **PostgreSQL**: localhost:5432 (uptimeo/uptimeo)
-- **Agent 1 Health**: http://localhost:8081/healthz
-- **Agent 2 Health**: http://localhost:8082/healthz
+- **Agent Health**: http://localhost:8081/healthz
 
 ## Documentation
 

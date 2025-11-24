@@ -8,8 +8,8 @@ Monitors HTTP endpoints and stores heartbeats directly in PostgreSQL.
 
 ```bash
 # 1. Start PostgreSQL with data
-cd docker/standalone
-docker compose -f postgres.yml up -d
+cd docker/
+docker-compose -f docker-compose.yml up -d postgres 
 
 # 2. Set environment variables
 export DB_CONN_STRING="postgres://uptimeo:uptimeo@localhost:5432/uptimeo?sslmode=disable"
@@ -19,7 +19,8 @@ export HEALTH_PORT=8071
 export QUEUE_PATH=./data/queue
 
 # 3. Run agent
-cd ../../uptime-o-agent
+cd agent/
+go mod tidy
 go run cmd/agent/main.go
 ```
 

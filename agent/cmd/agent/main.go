@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 )
 
@@ -43,6 +44,8 @@ func startHealthServer(port string, pool *pgxpool.Pool) {
 }
 
 func main() {
+	godotenv.Load()
+
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 	
 	// Set log level from environment variable

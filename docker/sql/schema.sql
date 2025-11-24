@@ -83,26 +83,6 @@ CREATE TABLE api_heartbeats (
 
 ALTER SEQUENCE api_heartbeats_id_seq OWNED BY api_heartbeats.id;
 
--- ✅ Today Partition (boot-strap)
-CREATE TABLE IF NOT EXISTS api_heartbeats_today
-PARTITION OF api_heartbeats
-FOR VALUES FROM (CURRENT_DATE) TO (CURRENT_DATE + INTERVAL '1 day');
-
--- ✅ Auto-Create Daily Partitions
-CREATE OR REPLACE FUNCTION create_daily_partition()
-RETURNS void AS $$
-DECLARE
-    dt date := CURRENT_DATE;
-    pname text := 'api_heartbeats_' || to_char(dt, 'YYYY_MM_DD');
-BEGIN
-    EXECUTE format(
-        'CREATE TABLE IF NOT EXISTS %I PARTITION OF api_heartbeats
-         FOR VALUES FROM (%L) TO (%L)',
-         pname, dt, dt + 1
-    );
-END;
-$$ LANGUAGE plpgsql;
-
 -- ✅ Indexes
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 

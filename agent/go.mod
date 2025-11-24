@@ -6,6 +6,7 @@ toolchain go1.24.9
 
 require (
 	github.com/jackc/pgx/v4 v4.18.1
+	github.com/joho/godotenv v1.5.1
 	github.com/sirupsen/logrus v1.9.3
 )
 

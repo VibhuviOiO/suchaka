@@ -4,6 +4,8 @@ Modern, containerized status page for displaying real-time service health. Deplo
 
 **Suchaka** is a free, open-source alternative to StatusPage.io. Perfect for startups, DevOps teams, and companies that need data sovereignty.
 
+![Status Page](docs/status-page.png)
+
 ## Architecture
 
 ### Agent (Go) - Monitoring & Resilience
@@ -146,21 +148,71 @@ VALUES (1, 1, TRUE, 'admin');
 
 ## Configuration
 
-Edit `docker/.env` to customize:
+Edit `docker/.env` to customize all aspects of your status page:
 
+### Database
 ```env
-# Branding
-NAVBAR_TITLE=Your Company
-STATUS_PAGE_TITLE=Service Status
-LOGO_URL=https://example.com/logo.png
-COMPANY_WEBSITE=https://example.com
-SUPPORT_EMAIL=support@example.com
-
-# Theme Colors
-NAVBAR_BG_COLOR=#ffffff
-NAVBAR_TEXT_COLOR=#202124
-PAGE_BG_COLOR=#f5f5f5
+DB_CONN_STRING=postgres://uptimeo:uptimeo@postgres:5432/uptimeo?sslmode=disable
 ```
+
+### Server
+```env
+PORT=8077                    # Backend server port
+CORS_ORIGIN=*               # CORS origin for API requests
+```
+
+### Branding
+```env
+NAVBAR_TITLE=Your Company                    # Header title
+STATUS_PAGE_TITLE=Service Status             # Page title
+STATUS_PAGE_SUBTITLE=Real-time dashboard     # Page subtitle
+LOGO_URL=https://example.com/logo.png        # Company logo
+LOGO_DISPLAY_MODE=both                       # logo_only, title_only, or both
+FOOTER_TEXT=Powered by Your Company          # Footer text
+```
+
+### Theme Colors
+```env
+NAVBAR_BG_COLOR=#ffffff         # Navigation bar background
+NAVBAR_TEXT_COLOR=#202124       # Navigation bar text
+FOOTER_BG_COLOR=#ffffff         # Footer background
+FOOTER_TEXT_COLOR=#5f6368       # Footer text
+PAGE_BG_COLOR=#f5f5f5           # Page background
+```
+
+### SEO Meta Tags
+```env
+META_DESCRIPTION=Real-time service status monitoring    # Page description
+META_KEYWORDS=uptime,status,monitoring                  # Page keywords
+META_AUTHOR=Your Company                                # Page author
+FAVICON_URL=https://example.com/favicon.ico             # Browser tab icon
+```
+
+### External Connectivity
+```env
+NAVBAR_LINK_TEXT=Console                    # Link text in navbar
+NAVBAR_LINK_URL=https://console.example.com # External console URL
+COMPANY_WEBSITE=https://example.com         # Company website
+SUPPORT_EMAIL=support@example.com           # Support email
+SUPPORT_PHONE=+1-800-123-4567              # Support phone number
+```
+
+### Company Information
+```env
+COMPANY_NAME=Your Company    # Company name displayed on page
+```
+
+### UI View Behavior
+```env
+SHOW_LATENCY_INDICATORS=true              # Show latency values (true/false)
+STATUS_DETAIL_LEVEL=detailed              # detailed (4 indicators) or simple (2 indicators)
+```
+
+**Status Indicators:**
+- `SHOW_LATENCY_INDICATORS=true` + `STATUS_DETAIL_LEVEL=detailed`: Shows 4 indicators (Available, Elevated latency, High latency, Service disruption) with latency values
+- `SHOW_LATENCY_INDICATORS=true` + `STATUS_DETAIL_LEVEL=simple`: Shows 2 indicators (Available, Service disruption) with latency values
+- `SHOW_LATENCY_INDICATORS=false` + `STATUS_DETAIL_LEVEL=detailed`: Shows 4 indicators without latency values
+- `SHOW_LATENCY_INDICATORS=false` + `STATUS_DETAIL_LEVEL=simple`: Shows 2 indicators without latency values
 
 ## Deployment Options
 

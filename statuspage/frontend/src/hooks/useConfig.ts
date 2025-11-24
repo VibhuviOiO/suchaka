@@ -16,11 +16,14 @@ export interface AppConfig {
   companyName: string;
   companyWebsite: string;
   supportEmail: string;
+  supportPhone: string;
   navbarBgColor: string;
   navbarTextColor: string;
   footerBgColor: string;
   footerTextColor: string;
   pageBgColor: string;
+  statusDetailLevel: string;
+  showLatencyIndicators: boolean;
 }
 
 export function useConfig() {
@@ -40,11 +43,14 @@ export function useConfig() {
     companyName: '',
     companyWebsite: '',
     supportEmail: '',
+    supportPhone: '',
     navbarBgColor: '#ffffff',
     navbarTextColor: '#202124',
     footerBgColor: '#ffffff',
     footerTextColor: '#5f6368',
-    pageBgColor: '#f5f5f5'
+    pageBgColor: '#f5f5f5',
+    statusDetailLevel: 'detailed',
+    showLatencyIndicators: true,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +58,7 @@ export function useConfig() {
   useEffect(() => {
     async function fetchConfig() {
       try {
-        const response = await fetch('/api/public/branding');
+        const response = await fetch(`/api/public/branding?t=${Date.now()}`);
         if (response.ok) {
           const configData = await response.json();
           setData(configData);

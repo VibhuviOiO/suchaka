@@ -15,11 +15,21 @@ const formatTimeAgo = (date: Date): string => {
 
 const getStatusTitle = (status: string): string => {
   switch (status) {
+    case 'UP':
+      return 'Available - Normal latency';
+    case 'WARNING':
+      return 'Available - Elevated latency';
+    case 'CRITICAL':
+      return 'Available - High latency';
     case 'DOWN':
       return 'Service disruption';
     default:
-      return 'Available';
+      return 'Unknown status';
   }
+};
+
+const copyToClipboard = (text: string) => {
+  navigator.clipboard.writeText(text);
 };
 
 export const StatusPage = () => {
@@ -37,14 +47,12 @@ export const StatusPage = () => {
     if (config) {
       document.title = config.pageTitle;
       
-      // Apply theme colors
       document.documentElement.style.setProperty('--navbar-bg', config.navbarBgColor);
       document.documentElement.style.setProperty('--navbar-text', config.navbarTextColor);
       document.documentElement.style.setProperty('--footer-bg', config.footerBgColor);
       document.documentElement.style.setProperty('--footer-text', config.footerTextColor);
       document.documentElement.style.setProperty('--page-bg', config.pageBgColor);
       
-      // Update favicon
       let favicon = document.querySelector("link[rel='icon']") as HTMLLinkElement;
       if (!favicon) {
         favicon = document.createElement('link');
@@ -84,29 +92,153 @@ export const StatusPage = () => {
   }, [config]);
 
   const renderNavbarBrand = () => {
-    const mode = config.logoDisplayMode || 'both';
-    if (mode === 'logo_only' && config.logoUrl) {
+    const mode = config?.logoDisplayMode || 'both';
+    if (mode === 'logo_only' && config?.logoUrl) {
       return <img src={config.logoUrl} alt={config.navbarTitle} />;
     } else if (mode === 'title_only') {
-      return <span className="navbar-title">{config.navbarTitle}</span>;
-    } else if (mode === 'both' && config.logoUrl) {
+      return <span className="navbar-title">{config?.navbarTitle}</span>;
+    } else if (mode === 'both' && config?.logoUrl) {
       return (
         <>
           <img src={config.logoUrl} alt={config.navbarTitle} />
-          <span className="navbar-title">{config.navbarTitle}</span>
+          <span className="navbar-title">{config?.navbarTitle}</span>
         </>
       );
     }
-    return <span className="navbar-title">{config.navbarTitle}</span>;
+    return <span className="navbar-title">{config?.navbarTitle}</span>;
+  };
+
+  const renderLegend = () => {
+    const showLatency = config?.showLatencyIndicators;
+    const isDetailed = config?.statusDetailLevel === 'detailed';
+    
+    if (!isDetailed) {
+      return (
+        <>
+          <div className="legend-item">
+            <div className="legend-icon">
+              <svg width="16" height="16" viewBox="0 0 16 16">
+                <circle cx="8" cy="8" r="8" fill="#34a853" />
+                <path d="M6 8l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <span>Available</span>
+          </div>
+          <div className="legend-item">
+            <div className="legend-icon">
+              <svg width="16" height="16" viewBox="0 0 16 16">
+                <circle cx="8" cy="8" r="8" fill="#ea4335" />
+                <path d="M5 5l6 6M11 5l-6 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </div>
+            <span>Service disruption</span>
+          </div>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <div className="legend-item">
+          <div className="legend-icon">
+            <svg width="16" height="16" viewBox="0 0 16 16">
+              <circle cx="8" cy="8" r="8" fill="#34a853" />
+              <path d="M6 8l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <span>Available</span>
+        </div>
+        <div className="legend-item">
+          <div className="legend-icon">
+            <svg width="16" height="16" viewBox="0 0 16 16">
+              <circle cx="8" cy="8" r="8" fill="#fbbc04" />
+              <path d="M8 4v5M8 11v1" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </div>
+          <span>Elevated latency</span>
+        </div>
+        <div className="legend-item">
+          <div className="legend-icon">
+            <svg width="16" height="16" viewBox="0 0 16 16">
+              <circle cx="8" cy="8" r="8" fill="#ff6d00" />
+              <path d="M8 4v5M8 11v1" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </div>
+          <span>High latency</span>
+        </div>
+        <div className="legend-item">
+          <div className="legend-icon">
+            <svg width="16" height="16" viewBox="0 0 16 16">
+              <circle cx="8" cy="8" r="8" fill="#ea4335" />
+              <path d="M5 5l6 6M11 5l-6 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </div>
+          <span>Service disruption</span>
+        </div>
+      </>
+    );
+  };
+
+  const renderStatusIndicator = (health: any) => {
+    const showLatency = config?.showLatencyIndicators;
+    const isDetailed = config?.statusDetailLevel === 'detailed';
+    const showLatencyValues = showLatency;
+
+    if (health.status === 'UP') {
+      return (
+        <>
+          <div className="status-icon status-icon-up">
+            <svg width="16" height="16" viewBox="0 0 16 16">
+              <circle cx="8" cy="8" r="8" fill="#34a853" />
+              <path d="M6 8l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          {showLatencyValues && <span className="response-time">{health.responseTimeMs}ms</span>}
+        </>
+      );
+    } else if (health.status === 'WARNING') {
+      return (
+        <>
+          <div className="status-icon status-icon-warning">
+            <svg width="16" height="16" viewBox="0 0 16 16">
+              <circle cx="8" cy="8" r="8" fill="#fbbc04" />
+              <path d="M8 4v5M8 11v1" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </div>
+          {showLatencyValues && <span className="response-time">{health.responseTimeMs}ms</span>}
+        </>
+      );
+    } else if (health.status === 'CRITICAL') {
+      return (
+        <>
+          <div className="status-icon status-icon-critical">
+            <svg width="16" height="16" viewBox="0 0 16 16">
+              <circle cx="8" cy="8" r="8" fill="#ff6d00" />
+              <path d="M8 4v5M8 11v1" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </div>
+          {showLatencyValues && <span className="response-time">{health.responseTimeMs}ms</span>}
+        </>
+      );
+    } else {
+      return (
+        <div className="status-icon status-icon-down">
+          <svg width="16" height="16" viewBox="0 0 16 16">
+            <circle cx="8" cy="8" r="8" fill="#ea4335" />
+            <path d="M5 5l6 6M11 5l-6 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </div>
+      );
+    }
   };
 
   if (loading) {
     return (
-      <div className="status-page-wrapper" style={{ background: config.pageBgColor || '#f5f5f5' }}>
+      <div className="status-page-wrapper" style={{ background: config?.pageBgColor || '#f5f5f5' }}>
         <nav className="status-navbar">
           <div className="navbar-content">
             <div className="navbar-brand">{renderNavbarBrand()}</div>
-            {config.navbarLinkText && config.navbarLinkUrl && (
+            {config?.navbarLinkText && config?.navbarLinkUrl && (
               <a href={config.navbarLinkUrl} target="_blank" rel="noopener noreferrer" className="console-link">
                 {config.navbarLinkText}
               </a>
@@ -120,11 +252,11 @@ export const StatusPage = () => {
 
   if (!statusData || statusData.apis.length === 0) {
     return (
-      <div className="status-page-wrapper" style={{ background: config.pageBgColor || '#f5f5f5' }}>
+      <div className="status-page-wrapper" style={{ background: config?.pageBgColor || '#f5f5f5' }}>
         <nav className="status-navbar">
           <div className="navbar-content">
             <div className="navbar-brand">{renderNavbarBrand()}</div>
-            {config.navbarLinkText && config.navbarLinkUrl && (
+            {config?.navbarLinkText && config?.navbarLinkUrl && (
               <a href={config.navbarLinkUrl} target="_blank" rel="noopener noreferrer" className="console-link">
                 {config.navbarLinkText}
               </a>
@@ -140,11 +272,11 @@ export const StatusPage = () => {
   }
 
   return (
-    <div className="status-page-wrapper" style={{ background: config.pageBgColor || '#f5f5f5' }}>
-      <nav className="status-navbar" style={{ background: config.navbarBgColor || '#ffffff', color: config.navbarTextColor || '#202124' }}>
+    <div className="status-page-wrapper" style={{ background: config?.pageBgColor || '#f5f5f5' }}>
+      <nav className="status-navbar" style={{ background: config?.navbarBgColor || '#ffffff', color: config?.navbarTextColor || '#202124' }}>
         <div className="navbar-content">
           <div className="navbar-brand">{renderNavbarBrand()}</div>
-          {config.navbarLinkText && config.navbarLinkUrl && (
+          {config?.navbarLinkText && config?.navbarLinkUrl && (
             <a href={config.navbarLinkUrl} target="_blank" rel="noopener noreferrer" className="console-link">
               {config.navbarLinkText}
             </a>
@@ -154,35 +286,36 @@ export const StatusPage = () => {
       
       <div className="status-page">
         <div className="status-header">
-          <h1>{config.pageTitle}</h1>
-          <p className="status-subtitle">{config.pageSubtitle}</p>
+          <h1>{config?.pageTitle}</h1>
+          <p className="status-subtitle">{config?.pageSubtitle}</p>
           <p className="status-description">
-            This page provides status information on the services that are part of <a href={config.companyWebsite} target="_blank" rel="noopener noreferrer" className="company-link">{config.companyName || 'our platform'}</a>. 
+            This page provides status information on the services that are part of <a href={config?.companyWebsite} target="_blank" rel="noopener noreferrer" className="company-link">{config?.companyName || 'our platform'}</a>. 
             Check back here to view the current status of the services listed below. 
-            If you are experiencing an issue not listed here, please email <span className="support-email-container"><span className="support-email" onClick={() => navigator.clipboard.writeText(config.supportEmail)}>{config.supportEmail}</span><button className="copy-icon" onClick={() => navigator.clipboard.writeText(config.supportEmail)} title="Copy email to clipboard"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button></span>
+            If you are experiencing an issue not listed here, please contact us:
           </p>
+          <div className="support-contacts">
+            {config?.supportEmail && (
+              <div className="contact-item">
+                <span>📧 Email: </span>
+                <span className="contact-value" onClick={() => copyToClipboard(config.supportEmail)} title="Click to copy">
+                  {config.supportEmail}
+                </span>
+              </div>
+            )}
+            {config?.supportPhone && (
+              <div className="contact-item">
+                <span>📞 Phone: </span>
+                <a href={`tel:${config.supportPhone}`} className="contact-value">
+                  {config.supportPhone}
+                </a>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="status-legend-container">
           <div className="status-legend">
-            <div className="legend-item">
-              <div className="legend-icon">
-                <svg width="16" height="16" viewBox="0 0 16 16">
-                  <circle cx="8" cy="8" r="8" fill="#34a853" />
-                  <path d="M6 8l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <span>Available</span>
-            </div>
-            <div className="legend-item">
-              <div className="legend-icon">
-                <svg width="16" height="16" viewBox="0 0 16 16">
-                  <circle cx="8" cy="8" r="8" fill="#ea4335" />
-                  <path d="M5 5l6 6M11 5l-6 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </div>
-              <span>Service disruption</span>
-            </div>
+            {renderLegend()}
           </div>
           {lastUpdate && (
             <div className="last-update-text">
@@ -212,34 +345,8 @@ export const StatusPage = () => {
                     return (
                       <td key={region} className="region-status">
                         {health ? (
-                          <div className={`status-indicator ${health.status === 'DOWN' ? 'down' : 'up'}`} title={health.status === 'DOWN' ? 'Service disruption' : 'Available'}>
-                            {health.status === 'DOWN' ? (
-                              <>
-                                <div className="status-icon status-icon-down">
-                                  <svg width="16" height="16" viewBox="0 0 16 16">
-                                    <circle cx="8" cy="8" r="8" fill="#ea4335" />
-                                    <path d="M5 5l6 6M11 5l-6 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                                  </svg>
-                                </div>
-                                <span className="response-time error-text">Error</span>
-                              </>
-                            ) : (
-                              <>
-                                <div className="status-icon status-icon-up">
-                                  <svg width="16" height="16" viewBox="0 0 16 16">
-                                    <circle cx="8" cy="8" r="8" fill="#34a853" />
-                                    <path
-                                      d="M6 8l2 2 4-4"
-                                      stroke="white"
-                                      strokeWidth="1.5"
-                                      fill="none"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    />
-                                  </svg>
-                                </div>
-                              </>
-                            )}
+                          <div className={`status-indicator ${health.status.toLowerCase()}`} title={getStatusTitle(health.status)}>
+                            {renderStatusIndicator(health)}
                           </div>
                         ) : null}
                       </td>
@@ -252,9 +359,9 @@ export const StatusPage = () => {
         </div>
       </div>
 
-      <footer className="status-footer" style={{ background: config.footerBgColor || '#ffffff' }}>
-        <div className="footer-content" style={{ color: config.footerTextColor || '#5f6368' }}>
-          <p>©{new Date().getFullYear()} {config.pageTitle} • {config.footerText}</p>
+      <footer className="status-footer" style={{ background: config?.footerBgColor || '#ffffff' }}>
+        <div className="footer-content" style={{ color: config?.footerTextColor || '#5f6368' }}>
+          <p>©{new Date().getFullYear()} {config?.pageTitle} • {config?.footerText}</p>
         </div>
       </footer>
     </div>

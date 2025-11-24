@@ -214,17 +214,50 @@ STATUS_DETAIL_LEVEL=detailed              # detailed (4 indicators) or simple (2
 - `SHOW_LATENCY_INDICATORS=false` + `STATUS_DETAIL_LEVEL=detailed`: Shows 4 indicators without latency values
 - `SHOW_LATENCY_INDICATORS=false` + `STATUS_DETAIL_LEVEL=simple`: Shows 2 indicators without latency values
 
-## Deployment Options
+## Docker Deployment
 
-**Minimal (2 Agents)**
+### 1. No Sample Data (Production Ready)
+Start with empty database - add your own monitors via SQL:
 ```bash
-docker compose up -d
+cd docker
+docker compose -f docker-compose.minimal.yml up -d
 ```
 
-**Extended (14 Agents, 10 Regions)**
+### 2. Small Sample Data (Testing)
+1 agent with minimal sample data:
 ```bash
-docker compose -f docker-compose.extended.yml up -d
+cd docker
+docker compose -f docker-compose.sample-small.yml up -d
 ```
+
+### 3. Large Sample Data (Full Demo)
+3 agents across 3 regions with full sample data:
+```bash
+cd docker
+docker compose -f docker-compose.sample-large.yml up -d
+```
+
+### 4. High Availability with Replicas (Testing)
+Test leader election and failover with 2 agents, each having 2 replicas sharing the same AGENT_ID:
+```bash
+cd docker
+docker compose -f docker-compose.ha-replicas.yml up -d
+```
+Only one replica per agent ID will be active at a time (leader). If the leader fails, another replica automatically takes over (~30s recovery).
+
+### 5. Custom Configuration
+Edit `docker/.env` before deploying:
+```bash
+cd docker
+cp .env.example .env
+# Edit .env with your settings
+docker compose -f docker-compose.sample-small.yml up -d
+```
+
+### Access After Deployment
+- **Status Page**: http://localhost:8077
+- **PostgreSQL**: localhost:5432 (uptimeo/uptimeo)
+- **Agent Health**: http://localhost:8081/healthz (minimal), http://localhost:8082/healthz (small), etc.
 
 ## Database Partitioning
 

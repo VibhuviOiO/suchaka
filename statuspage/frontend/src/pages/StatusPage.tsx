@@ -288,7 +288,7 @@ export const StatusPage = () => {
           </div>
           {lastUpdate && (
             <div className="last-update-text">
-              Refreshes every {refreshDisplay}s • Updated {formatTimeAgo(lastUpdate)}
+              Refreshes every {refreshDisplay} • Updated {formatTimeAgo(lastUpdate)}
             </div>
           )}
         </div>

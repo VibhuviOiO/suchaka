@@ -5,6 +5,9 @@ const router = Router();
 
 router.get('/', async (req, res) => {
   try {
+    const warnThreshold = parseInt(process.env.INDICATOR_WARN_THRESHOLD || '500');
+    const dangerThreshold = parseInt(process.env.INDICATOR_DANGER_THRESHOLD || '1000');
+
     const sql = `
       WITH latest_heartbeats AS (
         SELECT DISTINCT ON (h.monitor_id, d.region_id)
@@ -66,11 +69,13 @@ router.get('/', async (req, res) => {
         let status = 'UP';
         if (!row.success) {
           status = 'DOWN';
-        } else if (row.total_latency_ms > row.critical_threshold_ms) {
+        } else if (row.total_latency_ms > dangerThreshold) {
           status = 'CRITICAL';
-        } else if (row.total_latency_ms > row.warning_threshold_ms) {
+        } else if (row.total_latency_ms > warnThreshold) {
           status = 'WARNING';
         }
+
+
 
         api.regionHealth[row.region] = {
           status,

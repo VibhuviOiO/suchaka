@@ -1,5 +1,13 @@
 import { useState, useEffect } from 'react';
 
+export interface Indicator {
+  type: string;
+  enabled: boolean;
+  label: string;
+  color: string;
+  threshold?: number;
+}
+
 export interface AppConfig {
   navbarTitle: string;
   pageTitle: string;
@@ -22,8 +30,11 @@ export interface AppConfig {
   footerBgColor: string;
   footerTextColor: string;
   pageBgColor: string;
-  statusDetailLevel: string;
   showLatencyIndicators: boolean;
+  indicators: Indicator[];
+  indicatorOrder: string[];
+  warnThreshold: number;
+  dangerThreshold: number;
 }
 
 export function useConfig() {
@@ -49,8 +60,16 @@ export function useConfig() {
     footerBgColor: '#ffffff',
     footerTextColor: '#5f6368',
     pageBgColor: '#f5f5f5',
-    statusDetailLevel: 'detailed',
     showLatencyIndicators: true,
+    indicators: [
+      { type: 'SUCCESS', enabled: true, label: 'Available', color: '#34a853' },
+      { type: 'WARN', enabled: true, label: 'Elevated latency', color: '#fbbc04', threshold: 500 },
+      { type: 'DANGER', enabled: true, label: 'High latency', color: '#ff6d00', threshold: 1000 },
+      { type: 'DOWN', enabled: true, label: 'Service disruption', color: '#ea4335' },
+    ],
+    indicatorOrder: ['SUCCESS', 'WARN', 'DANGER', 'DOWN'],
+    warnThreshold: 500,
+    dangerThreshold: 1000,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

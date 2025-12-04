@@ -4,9 +4,12 @@ const router = Router();
 
 router.get('/', (req, res) => {
   const showLatencyIndicators = process.env.SHOW_LATENCY_INDICATORS === 'true';
-  const statusDetailLevel = process.env.STATUS_DETAIL_LEVEL || 'detailed';
   const elevatedThreshold = parseInt(process.env.ELEVATED_LATENCY_THRESHOLD || '500');
   const highThreshold = parseInt(process.env.HIGH_LATENCY_THRESHOLD || '1000');
+  const indicatorAvailable = process.env.INDICATOR_AVAILABLE !== 'false';
+  const indicatorElevatedLatency = process.env.INDICATOR_ELEVATED_LATENCY !== 'false';
+  const indicatorHighLatency = process.env.INDICATOR_HIGH_LATENCY !== 'false';
+  const indicatorServiceDisruption = process.env.INDICATOR_SERVICE_DISRUPTION !== 'false';
 
   res.json({
     navbarTitle: process.env.NAVBAR_TITLE || 'Health Status',
@@ -15,7 +18,10 @@ router.get('/', (req, res) => {
     pageTitle: process.env.STATUS_PAGE_TITLE || 'Health Status',
     pageSubtitle: process.env.STATUS_PAGE_SUBTITLE || 'Real-time monitoring dashboard',
     showLatencyIndicators,
-    statusDetailLevel,
+    indicatorAvailable,
+    indicatorElevatedLatency,
+    indicatorHighLatency,
+    indicatorServiceDisruption,
     elevatedLatencyThreshold: elevatedThreshold,
     highLatencyThreshold: highThreshold,
     logoUrl: process.env.LOGO_URL,

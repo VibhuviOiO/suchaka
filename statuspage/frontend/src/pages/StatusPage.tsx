@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useStatus } from '@/hooks/useStatus';
-import { useConfig } from '@/hooks/useConfig';
+import { useConfig, Indicator } from '@/hooks/useConfig';
 import '../styles/status-page.css';
 
 const formatTimeAgo = (date: Date): string => {
@@ -36,12 +36,20 @@ export const StatusPage = () => {
   const { data: statusData, loading, refreshDisplay } = useStatus();
   const { data: config } = useConfig();
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     if (!loading && statusData) {
       setLastUpdate(new Date());
     }
   }, [statusData, loading]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setRefreshTrigger(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (config) {
@@ -108,128 +116,89 @@ export const StatusPage = () => {
     return <span className="navbar-title">{config?.navbarTitle}</span>;
   };
 
-  const renderLegend = () => {
-    const showLatency = config?.showLatencyIndicators;
-    const isDetailed = config?.statusDetailLevel === 'detailed';
-    
-    if (!isDetailed) {
-      return (
-        <>
-          <div className="legend-item">
-            <div className="legend-icon">
-              <svg width="16" height="16" viewBox="0 0 16 16">
-                <circle cx="8" cy="8" r="8" fill="#34a853" />
-                <path d="M6 8l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <span>Available</span>
-          </div>
-          <div className="legend-item">
-            <div className="legend-icon">
-              <svg width="16" height="16" viewBox="0 0 16 16">
-                <circle cx="8" cy="8" r="8" fill="#ea4335" />
-                <path d="M5 5l6 6M11 5l-6 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </div>
-            <span>Service disruption</span>
-          </div>
-        </>
-      );
+  const getIndicatorSvg = (type: string, color: string) => {
+    switch (type) {
+      case 'SUCCESS':
+        return (
+          <svg width="16" height="16" viewBox="0 0 16 16">
+            <circle cx="8" cy="8" r="8" fill={color} />
+            <path d="M6 8l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        );
+      case 'WARN':
+        return (
+          <svg width="16" height="16" viewBox="0 0 16 16">
+            <circle cx="8" cy="8" r="8" fill={color} />
+            <path d="M8 4v5M8 11v1" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        );
+      case 'DANGER':
+        return (
+          <svg width="16" height="16" viewBox="0 0 16 16">
+            <circle cx="8" cy="8" r="8" fill={color} />
+            <path d="M8 4v5M8 11v1" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        );
+      case 'DOWN':
+        return (
+          <svg width="16" height="16" viewBox="0 0 16 16">
+            <circle cx="8" cy="8" r="8" fill={color} />
+            <path d="M5 5l6 6M11 5l-6 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        );
+      default:
+        return null;
     }
+  };
+
+  const renderLegend = () => {
+    const orderedIndicators = config?.indicatorOrder
+      ?.map(type => config.indicators?.find(ind => ind.type === type))
+      .filter((ind): ind is Indicator => ind !== undefined && ind.enabled) || [];
 
     return (
       <>
-        <div className="legend-item">
-          <div className="legend-icon">
-            <svg width="16" height="16" viewBox="0 0 16 16">
-              <circle cx="8" cy="8" r="8" fill="#34a853" />
-              <path d="M6 8l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+        {orderedIndicators.map(indicator => (
+          <div key={indicator.type} className="legend-item">
+            <div className="legend-icon">
+              {getIndicatorSvg(indicator.type, indicator.color)}
+            </div>
+            <span>{indicator.label}</span>
           </div>
-          <span>Available</span>
-        </div>
-        <div className="legend-item">
-          <div className="legend-icon">
-            <svg width="16" height="16" viewBox="0 0 16 16">
-              <circle cx="8" cy="8" r="8" fill="#fbbc04" />
-              <path d="M8 4v5M8 11v1" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </div>
-          <span>Elevated latency</span>
-        </div>
-        <div className="legend-item">
-          <div className="legend-icon">
-            <svg width="16" height="16" viewBox="0 0 16 16">
-              <circle cx="8" cy="8" r="8" fill="#ff6d00" />
-              <path d="M8 4v5M8 11v1" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </div>
-          <span>High latency</span>
-        </div>
-        <div className="legend-item">
-          <div className="legend-icon">
-            <svg width="16" height="16" viewBox="0 0 16 16">
-              <circle cx="8" cy="8" r="8" fill="#ea4335" />
-              <path d="M5 5l6 6M11 5l-6 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </div>
-          <span>Service disruption</span>
-        </div>
+        ))}
       </>
     );
   };
 
-  const renderStatusIndicator = (health: any) => {
-    const showLatency = config?.showLatencyIndicators;
-    const isDetailed = config?.statusDetailLevel === 'detailed';
-    const showLatencyValues = showLatency;
-
-    if (health.status === 'UP') {
-      return (
-        <>
-          <div className="status-icon status-icon-up">
-            <svg width="16" height="16" viewBox="0 0 16 16">
-              <circle cx="8" cy="8" r="8" fill="#34a853" />
-              <path d="M6 8l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-          {showLatencyValues && <span className="response-time">{health.responseTimeMs}ms</span>}
-        </>
-      );
-    } else if (health.status === 'WARNING') {
-      return (
-        <>
-          <div className="status-icon status-icon-warning">
-            <svg width="16" height="16" viewBox="0 0 16 16">
-              <circle cx="8" cy="8" r="8" fill="#fbbc04" />
-              <path d="M8 4v5M8 11v1" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </div>
-          {showLatencyValues && <span className="response-time">{health.responseTimeMs}ms</span>}
-        </>
-      );
-    } else if (health.status === 'CRITICAL') {
-      return (
-        <>
-          <div className="status-icon status-icon-critical">
-            <svg width="16" height="16" viewBox="0 0 16 16">
-              <circle cx="8" cy="8" r="8" fill="#ff6d00" />
-              <path d="M8 4v5M8 11v1" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </div>
-          {showLatencyValues && <span className="response-time">{health.responseTimeMs}ms</span>}
-        </>
-      );
-    } else {
-      return (
-        <div className="status-icon status-icon-down">
-          <svg width="16" height="16" viewBox="0 0 16 16">
-            <circle cx="8" cy="8" r="8" fill="#ea4335" />
-            <path d="M5 5l6 6M11 5l-6 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </div>
-      );
+  const getStatusIndicatorType = (health: any): string | null => {
+    if (health.status === 'DOWN') return 'DOWN';
+    if (health.status === 'CRITICAL') {
+      const dangerIndicator = config?.indicators?.find(ind => ind.type === 'DANGER');
+      return dangerIndicator?.enabled ? 'DANGER' : 'WARN';
     }
+    if (health.status === 'WARNING') return 'WARN';
+    if (health.status === 'UP') return 'SUCCESS';
+    return null;
+  };
+
+  const renderStatusIndicator = (health: any) => {
+    const indicatorType = getStatusIndicatorType(health);
+    const indicator = config?.indicators?.find(ind => ind.type === indicatorType);
+    
+    if (!indicator || !indicator.enabled) return null;
+
+    const showLatencyValues = config?.showLatencyIndicators;
+
+    return (
+      <>
+        <div className="status-icon" style={{ color: indicator.color }}>
+          {getIndicatorSvg(indicator.type, indicator.color)}
+        </div>
+        {showLatencyValues && health.responseTimeMs && (
+          <span className="response-time">{health.responseTimeMs}ms</span>
+        )}
+      </>
+    );
   };
 
   if (loading) {
@@ -319,7 +288,7 @@ export const StatusPage = () => {
           </div>
           {lastUpdate && (
             <div className="last-update-text">
-              Refreshes every {refreshDisplay} • Updated {formatTimeAgo(lastUpdate)}
+              Refreshes every {refreshDisplay}s • Updated {formatTimeAgo(lastUpdate)}
             </div>
           )}
         </div>

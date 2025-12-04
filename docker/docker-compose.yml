@@ -79,5 +79,4 @@ services:
 
 networks:
   uptimeo:
-    external: true
       
